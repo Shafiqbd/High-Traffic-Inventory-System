@@ -1,0 +1,51 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Drop represents a sneaker drop event
+model Drop {
+  id             String        @id @default(cuid())
+  name           String
+  price          Decimal       @db.Decimal(10, 2)
+  initialStock   Int
+  availableStock Int
+  startsAt       DateTime
+  createdAt      DateTime      @default(now())
+
+  // Relations
+  reservations   Reservation[]
+  purchases      Purchase[]
+}
+
+// Reservation represents a temporary 60-second hold on an item
+model Reservation {
+  id        String   @id @default(cuid())
+  dropId    String
+  drop      Drop     @relation(fields: [dropId], references: [id], onDelete: Cascade)
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  // One user can only have one reservation per drop
+  @@unique([dropId, userId])
+}
+
+// Purchase represents a completed purchase
+model Purchase {
+  id        String   @id @default(cuid())
+  dropId    String
+  drop      Drop     @relation(fields: [dropId], references: [id], onDelete: Cascade)
+  userId    String
+  createdAt DateTime @default(now())
+
+  // Index for efficient "latest 3" queries in activity feed
+  @@index([dropId, createdAt])
+}

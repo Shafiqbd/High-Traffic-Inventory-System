@@ -1,0 +1,45 @@
+┌─────────────┐       ┌───────────────┐       ┌─────────────┐
+│    Drop     │──────<│  Reservation  │>──────│   (userId)  │
+│             │ 1:N   │               │ N:1   │             │
+│             │       └───────────────┘       │    User     │
+│             │                                │  (external) │
+│             │       ┌───────────────┐       │             │
+│             │──────<│   Purchase    │>──────└─────────────┘
+│             │ 1:N   │               │ N:1
+└─────────────┘       └───────────────┘
+
+
+┌─────────────────────────────────────────────────────────────────────┐
+│                           Initial State                              │
+│  Drop.availableStock = 100                                          │
+│  No reservations, no purchases                                      │
+└─────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                      Step 1: User Reserves                           │
+│  Create Reservation with expiresAt = now() + 60s                   │
+│  Decrement: Drop.availableStock = 99                               │
+│                                                                      │
+│  DB State:                                                          │
+│  • Reservation { id, dropId, userId, expiresAt }                   │
+│  • Drop.availableStock = 99                                         │
+└─────────────────────────────────────────────────────────────────────┘
+                                    │
+                    ┌───────────────┴───────────────┐
+                    ▼                               ▼
+        ┌─────────────────────┐       ┌─────────────────────┐
+        │   User Purchases    │       │   Reservation       │
+        │   Within 60s        │       │   Expires           │
+        └─────────────────────┘       └─────────────────────┘
+                    │                               │
+                    ▼                               ▼
+    ┌───────────────────────────┐   ┌───────────────────────────┐
+    │   Step 2a: Complete       │   │   Step 2b: Stock Recovery │
+    │   Purchase                │   │   (Background Job)        │
+    │                           │   │                           │
+    │   Delete Reservation      │   │   Delete Reservation      │
+    │   Create Purchase         │   │   Increment Stock         │
+    │   Stock stays at 99       │   │   Drop.availableStock=100  │
+    └───────────────────────────┘   └───────────────────────────┘
+
