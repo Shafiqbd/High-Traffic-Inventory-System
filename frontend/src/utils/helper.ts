@@ -1,4 +1,4 @@
-export const apiUrl = import.meta.env.VITE_API_URL || '/api';
+export const apiUrl = import.meta.env.VITE_API_URL;
 
 export const formatCurrency = (amount: string | number): string => {
   const num = typeof amount === 'string' ? parseFloat(amount) : amount;
