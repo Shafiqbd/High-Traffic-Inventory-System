@@ -28,8 +28,8 @@ model User {
   id         String        @id @default(cuid())
   email      String        @unique
   name       String?
+  password String @default("123456")
   createdAt  DateTime      @default(now())
-
   // Relations
   reservations Reservation[]
   purchases    Purchase[]

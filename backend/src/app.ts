@@ -4,7 +4,8 @@ import { config } from './config/env.js';
 import { initializeSocket } from './services/socket.js';
 import { startStockRecoveryJob } from './jobs/stockRecovery.js';
 import dropRoutes from './routes/drop.routes.js';
-import usersRouter from './routes/users.js';
+import userRoutes from './routes/user.routes.js';
+import reservationRoutes from './routes/reservation.routes.js';
 
 const app = express();
 
@@ -23,7 +24,8 @@ app.get('/health', (req, res) => {
 
 // API Routes
 app.use('/api/drops', dropRoutes);
-app.use('/api/users', usersRouter);
+app.use('/api/users', userRoutes);
+app.use('/api/reservations', reservationRoutes);
 
 // 404 handler
 app.use((req, res) => {
