@@ -5,15 +5,18 @@ import { persistReducer } from "redux-persist";
 import { apiSlice } from "./apiSlice";
 import storage from "redux-persist/lib/storage";
 
+import authReducer from "./slices/authSlice";
+
 const rootReducer = combineReducers({
   [apiSlice.reducerPath]: apiSlice.reducer,
+  auth: authReducer
   
 });
 
 const persistConfig = {
   key: "root",
   storage,
-  whitelist: [],
+  whitelist: ['auth'],
 };
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

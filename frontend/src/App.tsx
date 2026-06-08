@@ -1,10 +1,12 @@
-
-import Home from './pages/Home';
+import { useSelector } from "react-redux";
+import Home from "./pages/Home";
+import { LoginPage } from "./pages/LoginPage";
 function App() {
+  const { auth } = useSelector((state: any) => state);
 
-  return (
-   <Home />
-  );
+  const { user } = auth;
+
+  return user ? <Home /> : <LoginPage />;
 }
 
 export default App;
