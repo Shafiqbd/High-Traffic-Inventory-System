@@ -1,20 +1,56 @@
-import { StockBar } from './StockBar';
-import { ActivityFeed } from './ActivityFeed';
-import type { DropWithPurchases } from '../types/drop.types';
+import { StockBar } from "./StockBar";
+import { ActivityFeed } from "./ActivityFeed";
+import type { DropWithPurchases } from "../types/drop.types";
+import { useEffect, useState } from "react";
+import { formatTime } from "../utils/helper";
 
 interface DropCardProps {
   drop: DropWithPurchases;
   onReserve?: (dropId: string) => void;
+  isReserve?: boolean;
+  expiresAt?: string;
 }
 
-export function DropCard({ drop, onReserve }: DropCardProps) {
+export function DropCard({
+  drop,
+  onReserve,
+  isReserve,
+  expiresAt,
+}: DropCardProps) {
   const isSoldOut = drop.availableStock === 0;
-
   const handleReserve = () => {
     if (onReserve && !isSoldOut) {
       onReserve(drop.id);
     }
   };
+
+  console.log("Expires at:", expiresAt);
+  console.log("isReserve:", isReserve);
+
+const [timeLeft, setTimeLeft] = useState(0);
+
+useEffect(() => {
+  if (!expiresAt) return;
+
+  const updateTimer = () => {
+    const now = Date.now();
+
+    const expiry = new Date(expiresAt).getTime();
+
+    const remaining = Math.max(
+      0,
+      Math.floor((expiry - now) / 1000)
+    );
+
+    setTimeLeft(remaining);
+  };
+
+  updateTimer();
+
+  const interval = setInterval(updateTimer, 1000);
+
+  return () => clearInterval(interval);
+}, [expiresAt]);
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
@@ -35,17 +71,47 @@ export function DropCard({ drop, onReserve }: DropCardProps) {
           <ActivityFeed purchases={drop.recentPurchases} />
         )}
 
-        <button
-          className={`w-full mt-4 py-2 px-4 rounded-md font-medium transition-colors ${
-            isSoldOut
-              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              : 'bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800'
-          }`}
-          disabled={isSoldOut}
-          onClick={handleReserve}
-        >
-          {isSoldOut ? 'Sold Out' : 'Reserve Now'}
-        </button>
+        {isReserve && timeLeft > 0 && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+            <div className="flex justify-between items-center">
+              <span className="font-medium text-blue-700">Reserved By You</span>
+
+              <span className="font-bold text-red-600">
+                ⏰ {formatTime(timeLeft)}
+              </span>
+            </div>
+
+            <p className="text-xs text-gray-500 mt-1">
+              Complete your purchase before reservation expires.
+            </p>
+          </div>
+        )}
+
+        {isReserve && timeLeft > 0 ? (
+          <button
+            className={`w-full mt-4 py-2 px-4 rounded-md font-medium transition-colors ${
+              isSoldOut
+                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                : "bg-green-600 text-white hover:bg-green-700 active:bg-blue-800"
+            }`}
+            disabled={isSoldOut}
+            onClick={handleReserve}
+          >
+            Purchase Now
+          </button>
+        ) : (
+          <button
+            className={`w-full mt-4 py-2 px-4 rounded-md font-medium transition-colors ${
+              isSoldOut
+                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                : "bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800"
+            }`}
+            disabled={isSoldOut}
+            onClick={handleReserve}
+          >
+            {isSoldOut ? "Sold Out" : "Reserve Now"}
+          </button>
+        )}
       </div>
     </div>
   );
