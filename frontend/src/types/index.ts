@@ -1,5 +1,12 @@
 // API Response Types
 
+export interface User {
+  id: string;
+  email: string;
+  name?: string;
+  createdAt: string;
+}
+
 export interface Drop {
   id: string;
   name: string;
@@ -14,6 +21,7 @@ export interface Reservation {
   id: string;
   dropId: string;
   userId: string;
+  user?: User;
   expiresAt: string;
   createdAt: string;
   status?: 'active' | 'expired';
@@ -23,6 +31,7 @@ export interface Purchase {
   id: string;
   dropId: string;
   userId: string;
+  user?: User;
   createdAt: string;
 }
 
@@ -38,6 +47,11 @@ export interface CreateDropRequest {
   price: string;
   initialStock: number;
   startsAt: string;
+}
+
+export interface CreateUserRequest {
+  email: string;
+  name?: string;
 }
 
 export interface CreateReservationRequest {

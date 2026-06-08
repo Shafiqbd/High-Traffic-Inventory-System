@@ -10,6 +10,31 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Enums for status tracking
+enum DropStatus {
+  UPCOMING
+  ACTIVE
+  ENDED
+}
+
+enum ReservationStatus {
+  ACTIVE
+  EXPIRED
+  PURCHASED
+}
+
+// User represents a customer who can reserve and purchase
+model User {
+  id         String        @id @default(cuid())
+  email      String        @unique
+  name       String?
+  createdAt  DateTime      @default(now())
+
+  // Relations
+  reservations Reservation[]
+  purchases    Purchase[]
+}
+
 // Drop represents a sneaker drop event
 model Drop {
   id             String        @id @default(cuid())
@@ -17,6 +42,7 @@ model Drop {
   price          Decimal       @db.Decimal(10, 2)
   initialStock   Int
   availableStock Int
+  status         DropStatus     @default(UPCOMING)
   startsAt       DateTime
   createdAt      DateTime      @default(now())
 
@@ -27,15 +53,19 @@ model Drop {
 
 // Reservation represents a temporary 60-second hold on an item
 model Reservation {
-  id        String   @id @default(cuid())
+  id        String            @id @default(cuid())
   dropId    String
-  drop      Drop     @relation(fields: [dropId], references: [id], onDelete: Cascade)
+  drop      Drop              @relation(fields: [dropId], references: [id], onDelete: Cascade)
   userId    String
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status    ReservationStatus @default(ACTIVE)
   expiresAt DateTime
-  createdAt DateTime @default(now())
+  createdAt DateTime          @default(now())
 
-  // One user can only have one reservation per drop
+  // One user can only have one ACTIVE reservation per drop
   @@unique([dropId, userId])
+  @@index([userId])
+  @@index([status])
 }
 
 // Purchase represents a completed purchase
@@ -44,8 +74,10 @@ model Purchase {
   dropId    String
   drop      Drop     @relation(fields: [dropId], references: [id], onDelete: Cascade)
   userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 
   // Index for efficient "latest 3" queries in activity feed
   @@index([dropId, createdAt])
+  @@index([userId])
 }
