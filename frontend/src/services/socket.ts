@@ -79,6 +79,16 @@ export function onReservationExpired(callback: (data: { dropId: string; availabl
   sock.on('reservation:expired', callback);
 }
 
+export function onDropActivated(callback: (drop: any) => void): void {
+  const sock = getSocket();
+  sock.on('drop:activated', callback);
+}
+
+export function onDropEnded(callback: (data: { dropId: string }) => void): void {
+  const sock = getSocket();
+  sock.on('drop:ended', callback);
+}
+
 // Cleanup function to remove all listeners
 export function cleanupSocket(): void {
   if (socket) {

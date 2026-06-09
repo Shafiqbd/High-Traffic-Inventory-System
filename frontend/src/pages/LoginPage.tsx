@@ -44,8 +44,6 @@ export function LoginPage() {
 
       const user = response.data;
 
-      localStorage.setItem("user", JSON.stringify(user));
-      console.log("users", user);
       dispatch(setCurrentUser(user));
       // navigate('/');
     } catch (error: any) {

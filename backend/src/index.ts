@@ -1,6 +1,7 @@
 import { createServer } from 'http';
 import { config } from './config/env.js';
 import { app, initializeSocket, startStockRecoveryJob } from './app.js';
+import { startDropStatusTransitionJob } from './jobs/dropStatusTransition.js';
 
 const httpServer = createServer(app);
 
@@ -16,6 +17,7 @@ httpServer.listen(config.port, () => {
 
 // Start background jobs
 startStockRecoveryJob();
+startDropStatusTransitionJob();
 
 // Graceful shutdown
 process.on('SIGTERM', () => {

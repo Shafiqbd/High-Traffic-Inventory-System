@@ -29,7 +29,7 @@ export function DropCard({
   };
 
   const handlePurchase = () => {
-    if (onPurchase && isReserve && !isSoldOut) {
+    if (onPurchase && isReserve ) {
       onPurchase(drop.id);
     }
   };
@@ -51,8 +51,6 @@ export function DropCard({
       const remaining = Math.max(0, Math.floor((expiry - now) / 1000));
 
       setTimeLeft(remaining);
-
-      // When timer reaches 0 and hasn't been handled yet, notify parent
       if (remaining === 0 && !expirationHandledRef.current && onReservationExpired) {
         expirationHandledRef.current = true;
         onReservationExpired(drop.id);
@@ -107,12 +105,8 @@ export function DropCard({
   
         {isReserve && timeLeft > 0 ? (
           <button
-            className={`w-full mt-2 py-2 px-4 rounded-md font-medium transition-colors ${
-              isSoldOut
-                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                : "bg-green-600 text-white hover:bg-green-700 active:bg-blue-800"
+            className={`w-full mt-2 py-2 px-4 rounded-md font-medium transition-colors  bg-green-600 text-white hover:bg-green-700 active:bg-blue-800
             }`}
-            disabled={isSoldOut}
             onClick={handlePurchase}
           >
             Purchase Now

@@ -7,19 +7,17 @@ import {
 import { useGetDropsQuery } from "../services/drop/dropApi";
 import { DropCard } from "../components/DropCard";
 import { Button } from "../components/ui/Button";
-import { CreateDropModal } from "../components/CreateDropModal";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useCreateReservationMutation } from "../services/reservations/reservationsApi";
 import { toast } from "react-toastify";
 import { useCreatePurchaseMutation } from "../services/purchase/purchaseApi";
 import { initializeSocket, joinDrop } from "../services/socket";
+import { handleLogout } from "../store/slices/authSlice";
 
 function Home() {
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
-  const [reservation, setReservation] = useState<
-    Record<string, any>
-  >({});
+  const [reservation, setReservation] = useState<Record<string, any>>({});
   const [localDrops, setLocalDrops] = useState<any[]>([]);
+  const dispatch = useDispatch();
 
   const auth = useSelector((state: any) => state.auth);
   const { user } = auth;
@@ -37,7 +35,9 @@ function Home() {
 
   // Track if socket is initialized
   const socketInitialized = useRef(false);
-  const socketInitializedRef = useRef<ReturnType<typeof initializeSocket> | null>(null);
+  const socketInitializedRef = useRef<ReturnType<
+    typeof initializeSocket
+  > | null>(null);
 
   // Initialize Socket and join drop rooms
   useEffect(() => {
@@ -62,8 +62,8 @@ function Home() {
         prevDrops.map((drop) =>
           drop.id === data.dropId
             ? { ...drop, recentPurchases: data.recentPurchases }
-            : drop
-        )
+            : drop,
+        ),
       );
     });
 
@@ -74,8 +74,8 @@ function Home() {
         prevDrops.map((drop) =>
           drop.id === data.dropId
             ? { ...drop, availableStock: data.availableStock }
-            : drop
-        )
+            : drop,
+        ),
       );
     });
 
@@ -86,8 +86,22 @@ function Home() {
         prevDrops.map((drop) =>
           drop.id === data.dropId
             ? { ...drop, availableStock: data.availableStock }
-            : drop
-        )
+            : drop,
+        ),
+      );
+    });
+
+    // Listen for drop activation events
+    socket.on("drop:activated", (data: any) => {
+      console.log("Drop activated event:", data);
+      setLocalDrops((prevDrops) => [...prevDrops, data]);
+    });
+
+    // Listen for drop ended events
+    socket.on("drop:ended", (data: any) => {
+      console.log("Drop ended event:", data);
+      setLocalDrops((prevDrops) =>
+        prevDrops.filter((drop) => drop.id !== data.dropId)
       );
     });
 
@@ -97,6 +111,8 @@ function Home() {
         socketInitializedRef.current.off("purchase:completed");
         socketInitializedRef.current.off("stock:updated");
         socketInitializedRef.current.off("reservation:expired");
+        socketInitializedRef.current.off("drop:activated");
+        socketInitializedRef.current.off("drop:ended");
       }
       socketInitialized.current = false;
     };
@@ -127,12 +143,12 @@ function Home() {
         toast.success(response.message);
         setReservation(response.data);
       }
-    } catch (error:any) {
+    } catch (error: any) {
       console.error("Error creating reservation:", error);
       toast.error(error.data.error);
     }
-  }; 
-  
+  };
+
   const handlePurchase = async (dropId: string) => {
     const payload = {
       dropId,
@@ -146,13 +162,12 @@ function Home() {
         toast.success(response.message);
         setReservation({});
       }
-    } catch (error:any) {
+    } catch (error: any) {
       console.error("Error creating purchase:", error);
       toast.error(error.data.error);
     }
   };
 
-  // Handle reservation expiration on client side (instant UI update)
   const handleReservationExpired = (dropId: string) => {
     console.log("Reservation expired for drop:", dropId);
 
@@ -164,12 +179,19 @@ function Home() {
       prevDrops.map((drop) =>
         drop.id === dropId
           ? { ...drop, availableStock: drop.availableStock + 1 }
-          : drop
-      )
+          : drop,
+      ),
     );
 
-    toast.info("Your reservation has expired");
+    setTimeout(() => {
+      toast.info("Your reservation has expired");
+    }, 200);
   };
+
+  const onClicklogout =  ()=> {
+    dispatch(handleLogout());
+
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
@@ -184,9 +206,13 @@ function Home() {
               Reserve your favorite sneakers before they're gone!
             </p>
           </div>
-          <Button onClick={() => setIsCreateModalOpen(true)} variant="primary">
+          <Button onClick={onClicklogout} variant="secondary">
+           Logout
+          </Button> 
+          
+           {/* <Button onClick={() => setIsCreateModalOpen(true)} variant="primary">
             + Create Drop
-          </Button>
+          </Button> */}
         </div>
 
         {drops.length === 0 ? (
@@ -201,7 +227,7 @@ function Home() {
                 onPurchase={(dropId) => handlePurchase(dropId)}
                 onReservationExpired={handleReservationExpired}
                 isReserve={reservation?.dropId === drop.id}
-                expiresAt = {reservation?.expiresAt}
+                expiresAt={reservation?.expiresAt}
               />
             ))}
           </div>
@@ -209,10 +235,10 @@ function Home() {
       </div>
 
       {/* Create Drop Modal */}
-      <CreateDropModal
+      {/* <CreateDropModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
-      />
+      /> */}
     </div>
   );
 }

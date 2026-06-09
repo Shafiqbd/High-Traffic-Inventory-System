@@ -1,12 +1,15 @@
 // Request/Response types for Drop API
 
-import { DropStatus } from "@prisma/client";
+export enum DropStatus {
+  ACTIVE = 'ACTIVE',
+  UPCOMING = 'UPCOMING'
+}
 
 export interface CreateDropDto {
   name: string;
   price: string | number;
   initialStock: number;
-  startsAt?: string | Date;
+  startsAt: string | Date;
   status: DropStatus;
 }
 

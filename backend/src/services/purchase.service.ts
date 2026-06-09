@@ -9,9 +9,8 @@ class PurchaseService {
 
     console.log('Completing purchase:', data);
 
-    // Use transaction to ensure atomicity
     const result = await prisma.$transaction(async (tx) => {
-      // Step 1: Find user's active reservation for this drop
+     //Find user's active reservation for this drop
       const reservation = await tx.reservation.findUnique({
         where: {
           dropId_userId: {
@@ -21,13 +20,10 @@ class PurchaseService {
         },
       });
 
-      console.log('reservation:', reservation);
-
       if (!reservation) {
         throw new Error('No reservation found for this drop');
       }
 
-      // Step 2: Check if reservation is active and not expired
       const now = new Date();
       if (reservation.status !== 'ACTIVE') {
         throw new Error('Reservation is not active');
@@ -37,7 +33,7 @@ class PurchaseService {
         throw new Error('Reservation has expired');
       }
 
-      // Step 3: Create the purchase record
+// Create the purchase record
       const purchase = await tx.purchase.create({
         data: {
           dropId,
@@ -45,7 +41,7 @@ class PurchaseService {
         },
       });
 
-      // Step 4: Update reservation status to PURCHASED
+      //  Update reservation
       await tx.reservation.update({
         where: { id: reservation.id },
         data: { status: 'PURCHASED' },
@@ -57,7 +53,7 @@ class PurchaseService {
       };
     });
 
-    // Step 5: Fetch recent purchases (last 3) for activity feed
+    // Fetch recent purchases (last 3)
     const recentPurchases = await prisma.purchase.findMany({
       where: { dropId },
       include: {
@@ -76,7 +72,7 @@ class PurchaseService {
       purchasedAt: p.createdAt.toISOString(),
     }));
 
-    // Step 6: Emit Socket.io event for real-time update
+    //  Emit  for real-time update
     emitPurchaseCompleted(dropId, recentPurchasesFormatted);
 
     return {

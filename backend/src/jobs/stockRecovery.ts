@@ -9,7 +9,7 @@ import { config } from '../config/env.js';
  */
 export async function processExpiredReservations() {
   try {
-    // Find expired reservations (only ACTIVE ones, skip PURCHASED)
+
     const expiredReservations = await prisma.reservation.findMany({
       where: {
         status: 'ACTIVE',
@@ -73,7 +73,7 @@ export async function processExpiredReservations() {
 }
 
 /**
- * Start the stock recovery background job
+ * Start  background job
  */
 export function startStockRecoveryJob() {
   const intervalMs = config.stockRecoveryIntervalMs;

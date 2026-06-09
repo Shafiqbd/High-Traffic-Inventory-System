@@ -4,11 +4,10 @@ import { ReservationStatus } from '@prisma/client';
 import { emitStockUpdated } from './socket.js';
 
 class ReservationService {
-  // Create reservation with transaction to prevent overselling
   async create(data: CreateReservationDto) {
     const { dropId, userId } = data;
 
-    // Use transaction to ensure atomicity and prevent race conditions
+    // Using transaction to ensure atomicity and prevent race conditions
     const result = await prisma.$transaction(async (tx) => {
       // Step 1: Lock the drop row FOR UPDATE to prevent concurrent modifications
       const drop = await tx.drop.findUnique({
@@ -24,7 +23,7 @@ class ReservationService {
         throw new Error('Drop is not active');
       }
 
-      // Step 3: Check if stock is available
+      // Step 3: Check stock
       if (drop.availableStock <= 0) {
         throw new Error('No items available');
       }
@@ -80,7 +79,7 @@ class ReservationService {
       };
     });
 
-    // Emit stock update event for real-time notification
+    // Emit stock for real-time notification
     emitStockUpdated(dropId, result.updatedStock);
 
     return {
@@ -113,7 +112,6 @@ class ReservationService {
       return null;
     }
 
-    // Check if reservation has expired
     const isExpired = reservation.expiresAt < new Date();
 
     return {
@@ -145,12 +143,10 @@ class ReservationService {
 
       dropId = reservation.dropId;
 
-      // Verify ownership
       if (reservation.userId !== userId) {
         throw new Error('This reservation belongs to another user');
       }
 
-      // Check if already purchased or expired
       if (reservation.status === 'PURCHASED') {
         throw new Error('Cannot cancel a purchased reservation');
       }
@@ -159,7 +155,6 @@ class ReservationService {
         throw new Error('Cannot cancel an expired reservation');
       }
 
-      // Get the drop to restore stock
       const drop = await tx.drop.findUnique({
         where: { id: reservation.dropId },
       });
@@ -173,7 +168,6 @@ class ReservationService {
         where: { id },
       });
 
-      // Restore stock
       const updatedDrop = await tx.drop.update({
         where: { id: reservation.dropId },
         data: {
@@ -186,7 +180,7 @@ class ReservationService {
       return updatedDrop.availableStock;
     });
 
-    // Emit stock update event for real-time notification
+    // Emit stock
     emitStockUpdated(dropId, result);
 
     return {

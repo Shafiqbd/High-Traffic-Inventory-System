@@ -1,4 +1,5 @@
 import type { Purchase } from "../types/drop.types";
+import { formatDate } from "../utils/helper";
 
 interface ActivityFeedProps {
   purchases: Purchase[];
@@ -17,7 +18,6 @@ export function ActivityFeed({ purchases }: ActivityFeedProps) {
     });
   };
 
-
   return (
     <div className="border-t pt-2 mt-2 mb-4">
       <h3 className="text-sm font-medium text-gray-700 mb-2">
@@ -31,10 +31,14 @@ export function ActivityFeed({ purchases }: ActivityFeedProps) {
           >
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-              <span className="font-semibold capitalize">{purchase.userName} </span>
+              <span className="font-semibold capitalize">
+                {purchase.userName}{" "}
+              </span>
             </div>
 
             <span className="text-gray-400">
+              {formatDate(purchase.purchasedAt as string)}
+              {", "}
               {formatTime(purchase.purchasedAt as string)}
             </span>
           </div>

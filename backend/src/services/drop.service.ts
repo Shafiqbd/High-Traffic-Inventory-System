@@ -7,6 +7,7 @@ class DropService {
   // Get all drops with optional filtering
   async findAll() {
     const drops = await prisma.drop.findMany({
+      where: { status: DropStatus.ACTIVE },
       orderBy: { createdAt: 'desc' },
     });
 
@@ -105,7 +106,7 @@ class DropService {
         initialStock,
         availableStock: initialStock,
         startsAt: startDate,
-        status
+        status: status ? (status as DropStatus) : DropStatus.UPCOMING,
       },
     });
 

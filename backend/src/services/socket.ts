@@ -8,7 +8,7 @@ export function initializeSocket(httpServer: HttpServer) {
     cors: {
       origin: process.env.FRONTEND_URL || 'http://localhost:5173',
       methods: ['GET', 'POST'],
-      credentials: true,
+      credentials: process.env.NODE_ENV === 'production',
     },
   });
 
@@ -69,4 +69,12 @@ export function emitReservationExpired(dropId: string, availableStock: number) {
     dropId,
     availableStock,
   });
+}
+
+export function emitDropActivated(drop: any) {
+  getSocketIO().emit('drop:activated', drop);
+}
+
+export function emitDropEnded(dropId: string) {
+  getSocketIO().emit('drop:ended', { dropId });
 }
