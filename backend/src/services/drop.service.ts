@@ -10,7 +10,34 @@ class DropService {
       orderBy: { createdAt: 'desc' },
     });
 
-    return drops.map((drop) => this.formatDrop(drop));
+    const result = [];
+    for (const drop of drops) {
+      const recentPurchases = await prisma.purchase.findMany({
+        where: { dropId: drop.id },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              createdAt: true,
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 3,
+      });
+
+      result.push({
+        ...this.formatDrop(drop),
+        recentPurchases: recentPurchases.map((p) => ({
+          id: p.id,
+          userName: p.user.name,
+          purchasedAt: p.createdAt.toISOString(),
+        })),
+      });
+    }
+
+    return result;
   }
 
   // Get single drop by ID with recent purchases
@@ -40,8 +67,9 @@ class DropService {
     return {
       ...this.formatDrop(drop),
       recentPurchases: recentPurchases.map((p) => ({
-        ...p,
-        createdAt: p.createdAt.toISOString(),
+        id: p.id,
+        userName: p.user.name,
+        purchasedAt: p.createdAt.toISOString(),
       })),
     };
   }

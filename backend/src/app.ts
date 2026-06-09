@@ -6,6 +6,7 @@ import { startStockRecoveryJob } from './jobs/stockRecovery.js';
 import dropRoutes from './routes/drop.routes.js';
 import userRoutes from './routes/user.routes.js';
 import reservationRoutes from './routes/reservation.routes.js';
+import purchaseRoutes from './routes/purchase.routes.js';
 
 const app = express();
 
@@ -26,6 +27,7 @@ app.get('/health', (req, res) => {
 app.use('/api/drops', dropRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/reservations', reservationRoutes);
+app.use('/api/purchases', purchaseRoutes);
 
 // 404 handler
 app.use((req, res) => {

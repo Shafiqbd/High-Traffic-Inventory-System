@@ -13,13 +13,10 @@ export interface Drop {
 
 export interface Purchase {
   id: string;
-  userId: string;
-  user?: {
-    id: string;
-    email: string;
-    name?: string;
-  };
-  createdAt: string;
+  userId?: string;
+  email?: string;
+  userName: string;
+  purchasedAt?: string;
 }
 
 export interface DropWithPurchases {

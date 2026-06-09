@@ -30,8 +30,8 @@ export function ActivityFeed({ purchases }: ActivityFeedProps) {
             className="text-xs text-gray-600 flex items-center gap-2"
           >
             <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-            <span>User {formatUserId(purchase.userId)}</span>
-            <span className="text-gray-400">{formatTime(purchase.createdAt)}</span>
+            <span>{purchase.userName} {formatUserId(purchase.id)}</span>
+            <span className="text-gray-400">{formatTime(purchase.purchasedAt as string)}</span>
           </div>
         ))}
       </div>
