@@ -51,6 +51,17 @@ cd High-Traffic-Inventory-System
 
 **No need to setup any database you just follow the .env.example file and move into .env file
 
+### 3. Backend Setup
+```bash
+cd backend
+
+# Install dependencies
+npm install
+
+# The backend is configured to http://localhost:3000/api
+# No additional configuration needed
+```
+
 ### 4. Frontend Setup
 
 ```bash

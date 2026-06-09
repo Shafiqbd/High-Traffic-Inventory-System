@@ -11,7 +11,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useCreateReservationMutation } from "../services/reservations/reservationsApi";
 import { toast } from "react-toastify";
 import { useCreatePurchaseMutation } from "../services/purchase/purchaseApi";
-import { initializeSocket, joinDrop } from "../services/socket";
+import { initializeSocket } from "../services/socket";
 import { handleLogout } from "../store/slices/authSlice";
 
 function Home() {
