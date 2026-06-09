@@ -28,9 +28,17 @@ class DropService {
       });
 
       result.push({
-        ...this.formatDrop(drop),
+        id: drop.id,
+        name: drop.name,
+        price: drop.price.toString(),
+        initialStock: drop.initialStock,
+        availableStock: drop.availableStock,
+        status: drop.status,
+        startsAt: drop.startsAt.toISOString(),
+        createdAt: drop.createdAt.toISOString(),
         recentPurchases: recentPurchases.map((p) => ({
           id: p.id,
+          userId: p.user.id,
           userName: p.user.name,
           purchasedAt: p.createdAt.toISOString(),
         })),
@@ -65,10 +73,19 @@ class DropService {
     });
 
     return {
-      ...this.formatDrop(drop),
+      id: drop.id,
+      name: drop.name,
+      price: drop.price.toString(),
+      initialStock: drop.initialStock,
+      availableStock: drop.availableStock,
+      status: drop.status,
+      startsAt: drop.startsAt.toISOString(),
+      createdAt: drop.createdAt.toISOString(),
       recentPurchases: recentPurchases.map((p) => ({
-        ...p,
-        createdAt: p.createdAt.toISOString(),
+        id: p.id,
+        userId: p.user.id,
+        userName: p.user.name,
+        purchasedAt: p.createdAt.toISOString(),
       })),
     };
   }
@@ -92,10 +109,21 @@ class DropService {
       },
     });
 
-    // Emit socket event
-    emitDropCreated(this.formatDrop(drop));
+    const formattedDrop = {
+      id: drop.id,
+      name: drop.name,
+      price: drop.price.toString(),
+      initialStock: drop.initialStock,
+      availableStock: drop.availableStock,
+      status: drop.status,
+      startsAt: drop.startsAt.toISOString(),
+      createdAt: drop.createdAt.toISOString(),
+    };
 
-    return this.formatDrop(drop);
+    // Emit socket event
+    emitDropCreated(formattedDrop);
+
+    return formattedDrop;
   }
 
   // Update drop
@@ -131,7 +159,16 @@ class DropService {
       emitStockUpdated(id, updatedDrop.availableStock);
     }
 
-    return this.formatDrop(updatedDrop);
+    return {
+      id: updatedDrop.id,
+      name: updatedDrop.name,
+      price: updatedDrop.price.toString(),
+      initialStock: updatedDrop.initialStock,
+      availableStock: updatedDrop.availableStock,
+      status: updatedDrop.status,
+      startsAt: updatedDrop.startsAt.toISOString(),
+      createdAt: updatedDrop.createdAt.toISOString(),
+    };
   }
 
   // Update drop status only
@@ -184,20 +221,6 @@ class DropService {
     });
 
     return true;
-  }
-
-  // Helper: Format drop for API response
-  private formatDrop(drop: any) {
-    return {
-      id: drop.id,
-      name: drop.name,
-      price: drop.price.toFixed(2),
-      initialStock: drop.initialStock,
-      availableStock: drop.availableStock,
-      status: drop.status,
-      startsAt: drop.startsAt.toISOString(),
-      createdAt: drop.createdAt.toISOString(),
-    };
   }
 }
 

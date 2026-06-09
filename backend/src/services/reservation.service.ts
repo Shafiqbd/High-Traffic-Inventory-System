@@ -128,50 +128,6 @@ class ReservationService {
     };
   }
 
-  // Get active reservation for a user on a specific drop
-  async findUserReservation(dropId: string, userId: string) {
-    const reservation = await prisma.reservation.findUnique({
-      where: {
-        dropId_userId: {
-          dropId,
-          userId,
-        },
-      },
-      include: {
-        drop: true,
-      },
-    });
-
-    if (!reservation) {
-      return null;
-    }
-
-    // Check if expired
-    const isExpired = reservation.expiresAt < new Date();
-    if (isExpired && reservation.status === 'ACTIVE') {
-      // Update status to expired
-      await prisma.reservation.update({
-        where: { id: reservation.id },
-        data: { status: 'EXPIRED' },
-      });
-    }
-
-    return {
-      id: reservation.id,
-      dropId: reservation.dropId,
-      userId: reservation.userId,
-      expiresAt: reservation.expiresAt.toISOString(),
-      status: isExpired ? 'EXPIRED' : reservation.status,
-      createdAt: reservation.createdAt.toISOString(),
-      drop: {
-        id: reservation.drop.id,
-        name: reservation.drop.name,
-        price: reservation.drop.price.toFixed(2),
-      },
-      timeLeft: isExpired ? 0 : Math.floor((reservation.expiresAt.getTime() - Date.now()) / 1000),
-    };
-  }
-
   // Cancel reservation and restore stock
   async cancel(id: string, data: CancelReservationDto) {
     const { userId } = data;
@@ -240,34 +196,6 @@ class ReservationService {
     };
   }
 
-  // Get all reservations for a user
-  async findByUserId(userId: string) {
-    const reservations = await prisma.reservation.findMany({
-      where: { userId },
-      include: {
-        drop: true,
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    return reservations.map((reservation) => {
-      const isExpired = reservation.expiresAt < new Date();
-      return {
-        id: reservation.id,
-        dropId: reservation.dropId,
-        userId: reservation.userId,
-        expiresAt: reservation.expiresAt.toISOString(),
-        status: isExpired ? 'EXPIRED' : reservation.status,
-        createdAt: reservation.createdAt.toISOString(),
-        drop: {
-          id: reservation.drop.id,
-          name: reservation.drop.name,
-          price: reservation.drop.price.toFixed(2),
-        },
-        timeLeft: isExpired ? 0 : Math.floor((reservation.expiresAt.getTime() - Date.now()) / 1000),
-      };
-    });
-  }
 }
 
 export default new ReservationService();

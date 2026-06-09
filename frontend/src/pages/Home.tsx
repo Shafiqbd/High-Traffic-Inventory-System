@@ -152,6 +152,25 @@ function Home() {
     }
   };
 
+  // Handle reservation expiration on client side (instant UI update)
+  const handleReservationExpired = (dropId: string) => {
+    console.log("Reservation expired for drop:", dropId);
+
+    // Clear the reservation state
+    setReservation({});
+
+    // Increment local stock immediately for instant UI feedback
+    setLocalDrops((prevDrops) =>
+      prevDrops.map((drop) =>
+        drop.id === dropId
+          ? { ...drop, availableStock: drop.availableStock + 1 }
+          : drop
+      )
+    );
+
+    toast.info("Your reservation has expired");
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
       <div className="max-w-6xl mx-auto">
@@ -180,6 +199,7 @@ function Home() {
                 drop={drop}
                 onReserve={(dropId) => handleReserve(dropId)}
                 onPurchase={(dropId) => handlePurchase(dropId)}
+                onReservationExpired={handleReservationExpired}
                 isReserve={reservation?.dropId === drop.id}
                 expiresAt = {reservation?.expiresAt}
               />

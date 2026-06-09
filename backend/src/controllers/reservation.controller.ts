@@ -8,8 +8,6 @@ class ReservationController {
     try {
       const body = req.body as CreateReservationDto;
 
-      console.log('Creating reservation:', body);
-
       // Validation
       if (!body.dropId || !body.userId) {
         return res.status(400).json({
@@ -78,43 +76,6 @@ class ReservationController {
     }
   }
 
-  // Get user reservation for a specific drop
-  async getUserReservation(req: Request, res: Response) {
-    try {
-      const { dropId, userId } = req.query;
-
-      if (!dropId || !userId) {
-        return res.status(400).json({
-          success: false,
-          error: 'dropId and userId query parameters are required',
-        } as ApiResponse<never>);
-      }
-
-      const reservation = await reservationService.findUserReservation(
-        dropId as string,
-        userId as string
-      );
-
-      if (!reservation) {
-        return res.status(404).json({
-          success: false,
-          error: 'No active reservation found',
-        } as ApiResponse<never>);
-      }
-
-      res.json({
-        success: true,
-        data: reservation,
-      } as ApiResponse<typeof reservation>);
-    } catch (error) {
-      console.error('Error fetching reservation:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to fetch reservation',
-      } as ApiResponse<never>);
-    }
-  }
-
   // Cancel reservation
   async cancel(req: Request, res: Response) {
     try {
@@ -157,33 +118,6 @@ class ReservationController {
     }
   }
 
-  // Get all reservations for a user
-  async getUserReservations(req: Request, res: Response) {
-    try {
-      const { userId } = req.query;
-
-      if (!userId) {
-        return res.status(400).json({
-          success: false,
-          error: 'userId query parameter is required',
-        } as ApiResponse<never>);
-      }
-
-      const reservations = await reservationService.findByUserId(userId as string);
-
-      res.json({
-        success: true,
-        data: reservations,
-        count: reservations.length,
-      } as ApiResponse<typeof reservations>);
-    } catch (error) {
-      console.error('Error fetching reservations:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to fetch reservations',
-      } as ApiResponse<never>);
-    }
-  }
 }
 
 export default new ReservationController();

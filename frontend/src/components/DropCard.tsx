@@ -1,13 +1,14 @@
 import { StockBar } from "./StockBar";
 import { ActivityFeed } from "./ActivityFeed";
 import type { DropWithPurchases } from "../types/drop.types";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { formatTime } from "../utils/helper";
 
 interface DropCardProps {
   drop: DropWithPurchases;
   onReserve?: (dropId: string) => void;
   onPurchase?: (dropId: string) => void;
+  onReservationExpired?: (dropId: string) => void;
   isReserve?: boolean;
   expiresAt?: string;
 }
@@ -16,6 +17,7 @@ export function DropCard({
   drop,
   onReserve,
   onPurchase,
+  onReservationExpired,
   isReserve,
   expiresAt,
 }: DropCardProps) {
@@ -33,18 +35,28 @@ export function DropCard({
   };
 
   const [timeLeft, setTimeLeft] = useState(0);
+  const expirationHandledRef = useRef(false);
 
   useEffect(() => {
-    if (!expiresAt) return;
+    if (!expiresAt) {
+      expirationHandledRef.current = false;
+      return;
+    }
+
+    expirationHandledRef.current = false;
 
     const updateTimer = () => {
       const now = Date.now();
-
       const expiry = new Date(expiresAt).getTime();
-
       const remaining = Math.max(0, Math.floor((expiry - now) / 1000));
 
       setTimeLeft(remaining);
+
+      // When timer reaches 0 and hasn't been handled yet, notify parent
+      if (remaining === 0 && !expirationHandledRef.current && onReservationExpired) {
+        expirationHandledRef.current = true;
+        onReservationExpired(drop.id);
+      }
     };
 
     updateTimer();
@@ -52,7 +64,7 @@ export function DropCard({
     const interval = setInterval(updateTimer, 1000);
 
     return () => clearInterval(interval);
-  }, [expiresAt]);
+  }, [expiresAt, drop.id, onReservationExpired]);
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
@@ -92,10 +104,10 @@ export function DropCard({
             </div>
           )}
         </div>
-
+  
         {isReserve && timeLeft > 0 ? (
           <button
-            className={`w-full mt-4 py-2 px-4 rounded-md font-medium transition-colors ${
+            className={`w-full mt-2 py-2 px-4 rounded-md font-medium transition-colors ${
               isSoldOut
                 ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                 : "bg-green-600 text-white hover:bg-green-700 active:bg-blue-800"
@@ -107,7 +119,7 @@ export function DropCard({
           </button>
         ) : (
           <button
-            className={`w-full mt-4 py-2 px-4 rounded-md font-medium transition-colors ${
+            className={`w-full mt-2 py-2 px-4 rounded-md font-medium transition-colors ${
               isSoldOut
                 ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                 : "bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800"

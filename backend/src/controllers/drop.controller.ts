@@ -11,7 +11,6 @@ class DropController {
       res.json({
         success: true,
         data: drops,
-        count: drops.length,
       } as ApiResponse<typeof drops>);
     } catch (error) {
       console.error('Error fetching drops:', error);

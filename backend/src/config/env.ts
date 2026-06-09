@@ -9,6 +9,6 @@ export const config = {
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
   // Reservation expires after 60 seconds
   reservationExpirySeconds: 60,
-  // Stock recovery job runs every 10 seconds
-  stockRecoveryIntervalMs: 10000,
+  // Stock recovery job runs every 2 seconds for faster UI updates
+  stockRecoveryIntervalMs: 2000,
 };
