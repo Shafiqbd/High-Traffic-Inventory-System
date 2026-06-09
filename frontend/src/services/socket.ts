@@ -2,15 +2,23 @@ import { io, Socket } from 'socket.io-client';
 
 let socket: Socket | null = null;
 
+// Get socket server URL from API URL (remove /api suffix)
+const getSocketServerUrl = (): string => {
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+  return apiUrl.replace('/api', '');
+};
+
 export function initializeSocket(): Socket {
   if (socket) {
     console.log('Returning existing socket instance');
     return socket;
   }
 
-  console.log('Initializing new socket connection to /');
-  socket = io('/', {
+  const serverUrl = getSocketServerUrl();
+  console.log('Initializing new socket connection to', serverUrl);
+  socket = io(serverUrl, {
     transports: ['websocket', 'polling'],
+    secure: true, // Use HTTPS in production
   });
 
   socket.on('connect', () => {
