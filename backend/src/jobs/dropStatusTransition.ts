@@ -5,7 +5,7 @@ import { DropStatus } from '@prisma/client';
 /**
  * Background job that automatically transitions drop statuses based on time and stock
  * - UPCOMING → ACTIVE: When startsAt time is reached
- * - ACTIVE → ENDED: When stock reaches 0 or 24 hours after start
+ * - ACTIVE → UPCOMING: When stock reaches 0 or 3 minutes after start
  * Runs every 30 seconds
  */
 export async function processDropStatusTransitions() {
@@ -40,7 +40,7 @@ export async function processDropStatusTransitions() {
       console.log(`✅ Drop "${drop.name}" (${drop.id}) activated`);
     }
 
-    // 2. End drops 
+    // 2. End drops
     const activeDrops = await prisma.drop.findMany({
       where: {
         status: DropStatus.ACTIVE,
@@ -54,11 +54,11 @@ export async function processDropStatusTransitions() {
     for (const drop of activeDrops) {
       await prisma.drop.update({
         where: { id: drop.id },
-        data: { status: DropStatus.ENDED },
+        data: { status: DropStatus.UPCOMING },
       });
 
       emitDropEnded(drop.id);
-      console.log(`🏁 Drop "${drop.name}" (${drop.id}) ended`);
+      console.log(`🏁 Drop "${drop.name}" (${drop.id}) UPCOMING`);
     }
   } catch (error) {
     console.error('Error processing drop status transitions:', error);
@@ -69,7 +69,7 @@ export async function processDropStatusTransitions() {
  * Start background job
  */
 export function startDropStatusTransitionJob() {
-  const intervalMs = 30000; // 30 seconds
+  const intervalMs = 3000; // 30 seconds
   console.log(`🔄 Starting drop status transition job (interval: ${intervalMs}ms)`);
   processDropStatusTransitions(); // Run immediately
   setInterval(processDropStatusTransitions, intervalMs);

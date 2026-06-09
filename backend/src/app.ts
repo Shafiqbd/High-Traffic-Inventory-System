@@ -3,6 +3,7 @@ import cors from 'cors';
 import { config } from './config/env.js';
 import { initializeSocket } from './services/socket.js';
 import { startStockRecoveryJob } from './jobs/stockRecovery.js';
+import {startDropStatusTransitionJob} from './jobs/dropStatusTransition.js';
 import dropRoutes from './routes/drop.routes.js';
 import userRoutes from './routes/user.routes.js';
 import reservationRoutes from './routes/reservation.routes.js';
@@ -43,4 +44,4 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
   });
 });
 
-export { app, initializeSocket, startStockRecoveryJob };
+export { app, initializeSocket, startStockRecoveryJob, startDropStatusTransitionJob};

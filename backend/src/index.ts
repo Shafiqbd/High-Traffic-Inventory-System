@@ -1,7 +1,7 @@
 import { createServer } from 'http';
 import { config } from './config/env.js';
-import { app, initializeSocket, startStockRecoveryJob } from './app.js';
-import { startDropStatusTransitionJob } from './jobs/dropStatusTransition.js';
+import { app, initializeSocket, startDropStatusTransitionJob, startStockRecoveryJob } from './app.js';
+
 
 const httpServer = createServer(app);
 

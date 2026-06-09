@@ -39,9 +39,9 @@ function Home() {
     typeof initializeSocket
   > | null>(null);
 
-  // Initialize Socket and join drop rooms
+  // Initialize Socket immediately (don't wait for drops)
   useEffect(() => {
-    if (socketInitialized.current || !localDrops || localDrops.length === 0) {
+    if (socketInitialized.current) {
       return;
     }
 
@@ -49,74 +49,87 @@ function Home() {
     socketInitializedRef.current = socket;
     socketInitialized.current = true;
 
-    // Join all drop rooms
-    localDrops.forEach((drop) => {
-      joinDrop(drop.id);
-      console.log("Joined drop room:", drop.id);
+    console.log("✅ Socket initialized, setting up event listeners...");
+
+    // Listen for drop activation events
+    socket.on("drop:activated", (data: any) => {
+      console.log("🎉 Drop activated event received:", data);
+      setLocalDrops((prevDrops) => {
+        // Check if drop already exists
+        const exists = prevDrops.some((d) => d.id === data.id);
+        if (exists) {
+          // Update existing drop
+          return prevDrops.map((drop) =>
+            drop.id === data.id
+              ? { ...drop, status: data.status, availableStock: data.availableStock }
+              : drop
+          );
+        } else {
+          // Add new drop
+          return [...prevDrops, { ...data, recentPurchases: [] }];
+        }
+      });
+    });
+
+    // Listen for drop ended events (becomes UPCOMING)
+    socket.on("drop:ended", (data: any) => {
+      console.log("🏁 Drop ended event received:", data);
+      setLocalDrops((prevDrops) =>
+        prevDrops.map((drop) =>
+          drop.id === data.dropId ? { ...drop, status: "UPCOMING" } : drop
+        )
+      );
     });
 
     // Listen for purchase completed events
     socket.on("purchase:completed", (data: any) => {
-      console.log("Purchase completed event:", data);
+      console.log("💰 Purchase completed event received:", data);
       setLocalDrops((prevDrops) =>
         prevDrops.map((drop) =>
           drop.id === data.dropId
             ? { ...drop, recentPurchases: data.recentPurchases }
-            : drop,
-        ),
+            : drop
+        )
       );
     });
 
     // Listen for stock updated events
     socket.on("stock:updated", (data: any) => {
-      console.log("Stock updated event:", data);
+      console.log("📦 Stock updated event received:", data);
       setLocalDrops((prevDrops) =>
         prevDrops.map((drop) =>
           drop.id === data.dropId
             ? { ...drop, availableStock: data.availableStock }
-            : drop,
-        ),
+            : drop
+        )
       );
     });
 
     // Listen for reservation expired events
     socket.on("reservation:expired", (data: any) => {
-      console.log("Reservation expired event:", data);
+      console.log("⏰ Reservation expired event received:", data);
       setLocalDrops((prevDrops) =>
         prevDrops.map((drop) =>
           drop.id === data.dropId
             ? { ...drop, availableStock: data.availableStock }
-            : drop,
-        ),
-      );
-    });
-
-    // Listen for drop activation events
-    socket.on("drop:activated", (data: any) => {
-      console.log("Drop activated event:", data);
-      setLocalDrops((prevDrops) => [...prevDrops, data]);
-    });
-
-    // Listen for drop ended events
-    socket.on("drop:ended", (data: any) => {
-      console.log("Drop ended event:", data);
-      setLocalDrops((prevDrops) =>
-        prevDrops.filter((drop) => drop.id !== data.dropId)
+            : drop
+        )
       );
     });
 
     return () => {
       // Cleanup on unmount
       if (socketInitializedRef.current) {
+        socketInitializedRef.current.off("drop:activated");
+        socketInitializedRef.current.off("drop:ended");
         socketInitializedRef.current.off("purchase:completed");
         socketInitializedRef.current.off("stock:updated");
         socketInitializedRef.current.off("reservation:expired");
-        socketInitializedRef.current.off("drop:activated");
-        socketInitializedRef.current.off("drop:ended");
       }
       socketInitialized.current = false;
     };
-  }, [localDrops.length]); // Only re-run when number of drops changes
+  }, []); // Run once on mount
+
 
   const drops = localDrops;
 
@@ -182,10 +195,8 @@ function Home() {
           : drop,
       ),
     );
-
-    setTimeout(() => {
       toast.info("Your reservation has expired");
-    }, 200);
+
   };
 
   const onClicklogout =  ()=> {

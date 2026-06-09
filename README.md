@@ -41,60 +41,15 @@ Before you begin, ensure you have the following installed:
 ### 1. Clone the Repository
 
 ```bash
-git clone <your-repo-url>
+git clone git@github.com:Shafiqbd/High-Traffic-Inventory-System.git
 cd High-Traffic-Inventory-System
 ```
 
+### There is two part in same directory backend and frontend
+
 ### 2. Database Setup
 
-**Install PostgreSQL** (if not already installed):
-```bash
-# Ubuntu/Debian
-sudo apt update
-sudo apt install postgresql postgresql-contrib
-
-# macOS
-brew install postgresql
-
-# Windows
-# Download from https://www.postgresql.org/download/windows/
-```
-
-**Create Database**:
-```bash
-# Start PostgreSQL service
-sudo service postgresql start  # Linux
-brew services start postgresql  # macOS
-
-# Login to PostgreSQL and create database
-sudo -u postgres psql
-CREATE DATABASE sneaker_drop;
-\q
-```
-
-### 3. Backend Setup
-
-```bash
-cd backend
-
-# Install dependencies
-npm install
-
-# Create .env file
-cp .env.example .env
-
-# Edit .env with your database credentials
-# DATABASE_URL="postgresql://postgres:YOUR_PASSWORD@localhost:5432/sneaker_drop?schema=public"
-
-# Generate Prisma client
-npm run prisma:generate
-
-# Run database migrations (creates tables)
-npm run prisma:migrate
-
-# (Optional) Seed database with sample data
-npm run prisma:seed
-```
+**No need to setup any database you just follow the .env.example file and move into .env file
 
 ### 4. Frontend Setup
 
@@ -104,7 +59,7 @@ cd frontend
 # Install dependencies
 npm install
 
-# The frontend is configured to use the backend API at http://localhost:3000
+# The frontend is configured to use the backend API at http://localhost:3000/api
 # No additional configuration needed
 ```
 
@@ -133,11 +88,14 @@ Both frontend and backend support hot-reload during development. Changes will au
 ## 🧪 Testing the Application
 
 ### 1. Open the Application
-Navigate to `http://localhost:5173` in your browser
+Navigate to `http://localhost:5173` in your browserd
 
-### 2. Create a Test User
+### 2. There is five test user in database you can use:
 - Use any email and name to login
 - Password is pre-configured (demo mode)
+1. shafiq@gmail.com - 123456
+2. admin@gmail.com - 123456
+3. rasel@gmail.com - 123456
 
 ### 3. Test Real-Time Updates
 **Open two browser windows side-by-side:**
@@ -157,12 +115,6 @@ Navigate to `http://localhost:5173` in your browser
 2. Only ONE browser should succeed
 3. Others will receive "No stock available" error
 
-## 📚 API Documentation
-
-For detailed API endpoint documentation, see:
-- **[API_DESIGN.md](API_DESIGN.md)** - Complete API reference
-- **[SOCKET_EVENTS.md](SOCKET_EVENTS.md)** - WebSocket events
-- **[TRANSACTION_FLOW.md](TRANSACTION_FLOW.md)** - Transaction flow diagrams
 
 ## 🏗 Architecture & Key Design Decisions
 
@@ -310,56 +262,16 @@ High-Traffic-Inventory-System/
 │   └── vite.config.ts
 ├── docs/
 │   └── Technical Assessment.pdf   # Requirements document
-├── API_DESIGN.md                  # API documentation
-├── SOCKET_EVENTS.md               # WebSocket events
-├── TRANSACTION_FLOW.md            # Transaction flows
 └── README.md                      # This file
 ```
 
-## 🔧 Configuration
-
-### Backend Environment Variables
-
-```env
-# Server
-PORT=3000
-NODE_ENV=development
-
-# Database
-DATABASE_URL="postgresql://postgres:password@localhost:5432/sneaker_drop?schema=public"
-
-# CORS
-FRONTEND_URL="http://localhost:5173"
-```
-
-### Frontend Environment Variables
-
-```env
-VITE_API_URL="http://localhost:3000"
-```
-
-## 🎯 Demo Video Instructions
-
-To create a 2-minute demo showing real-time stock sync:
-
-1. **Open two browser windows** side-by-side at `http://localhost:5173`
-2. **Demonstrate reservation:**
-   - Click "Reserve Now" in Window 1
-   - Show stock bar update instantly in Window 2
-3. **Demonstrate purchase:**
-   - Click "Purchase Now" in Window 1
-   - Show Activity Feed update in Window 2
-4. **Demonstrate stock recovery:**
-   - Reserve an item and wait 60 seconds
-   - Show stock automatically return
-
 ## 🚀 Deployment
 
-For production deployment, consider:
+I have deployed on live server you can check here:
 
-1. **Database** - Neon (serverless PostgreSQL) or Supabase
-2. **Backend** - Vercel, Railway, or Render
-3. **Frontend** - Vercel or Netlify
+1. **Database** - 194.238.18.90:10000
+2. **Backend** - https://api.shafiq.info.bd/api
+3. **Frontend** - https://demo.shafiq.info.bd
 4. **WebSocket** - Configure for production CORS
 
 ## 📝 License
