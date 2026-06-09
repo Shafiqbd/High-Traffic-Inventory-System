@@ -5,7 +5,8 @@ let socket: Socket | null = null;
 // Get socket server URL from API URL (remove /api suffix)
 const getSocketServerUrl = (): string => {
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
-  const socketUrl = apiUrl.replace('/api', '');
+  // Only remove /api if it's at the end of the URL
+  const socketUrl = apiUrl.endsWith('/api') ? apiUrl.slice(0, -4) : apiUrl;
   console.log('Socket server URL:', socketUrl, 'from API URL:', apiUrl);
   return socketUrl;
 };
