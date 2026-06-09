@@ -11,17 +11,18 @@ import { CreateDropModal } from "../components/CreateDropModal";
 import { useSelector } from "react-redux";
 import { useCreateReservationMutation } from "../services/reservations/reservationsApi";
 import { toast } from "react-toastify";
+import { useCreatePurchaseMutation } from "../services/purchase/purchaseApi";
 
 function Home() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
-  const [isReserve, setIsReserve] = useState<boolean>(false);
-const [reservation, setReservation] = useState<
-  Record<string, any>
->({});
+  const [reservation, setReservation] = useState<
+    Record<string, any>
+  >({});
 
   const auth = useSelector((state: any) => state.auth);
   const { user } = auth;
   const [createReserve] = useCreateReservationMutation();
+  const [createPurchase] = useCreatePurchaseMutation();
 
   const { data: dropsResponse, isLoading, isError, error } = useGetDropsQuery();
 
@@ -48,11 +49,29 @@ const [reservation, setReservation] = useState<
       console.log("Reserving drop:", response);
       if (response) {
         toast.success(response.message);
-        setIsReserve(true);
         setReservation(response.data);
       }
     } catch (error:any) {
       console.error("Error creating reservation:", error);
+      toast.error(error.data.error);
+    }
+  }; 
+  
+  const handlePurchase = async (dropId: string) => {
+    const payload = {
+      dropId,
+      userId: user.id,
+    };
+
+    try {
+      const response: any = await createPurchase(payload).unwrap();
+      console.log("purchase reserve:", response);
+      if (response) {
+        toast.success(response.message);
+        setReservation({});
+      }
+    } catch (error:any) {
+      console.error("Error creating purchase:", error);
       toast.error(error.data.error);
     }
   };
@@ -84,6 +103,7 @@ const [reservation, setReservation] = useState<
                 key={drop.id}
                 drop={drop}
                 onReserve={(dropId) => handleReserve(dropId)}
+                onPurchase={(dropId) => handlePurchase(dropId)}
                 isReserve={reservation?.dropId === drop.id}
                 expiresAt = {reservation?.expiresAt}
               />

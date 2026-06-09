@@ -7,6 +7,7 @@ import { formatTime } from "../utils/helper";
 interface DropCardProps {
   drop: DropWithPurchases;
   onReserve?: (dropId: string) => void;
+  onPurchase?: (dropId: string) => void;
   isReserve?: boolean;
   expiresAt?: string;
 }
@@ -14,6 +15,7 @@ interface DropCardProps {
 export function DropCard({
   drop,
   onReserve,
+  onPurchase,
   isReserve,
   expiresAt,
 }: DropCardProps) {
@@ -24,68 +26,72 @@ export function DropCard({
     }
   };
 
-  console.log("Expires at:", expiresAt);
-  console.log("isReserve:", isReserve);
-
-const [timeLeft, setTimeLeft] = useState(0);
-
-useEffect(() => {
-  if (!expiresAt) return;
-
-  const updateTimer = () => {
-    const now = Date.now();
-
-    const expiry = new Date(expiresAt).getTime();
-
-    const remaining = Math.max(
-      0,
-      Math.floor((expiry - now) / 1000)
-    );
-
-    setTimeLeft(remaining);
+  const handlePurchase = () => {
+    if (onPurchase && isReserve && !isSoldOut) {
+      onPurchase(drop.id);
+    }
   };
 
-  updateTimer();
+  const [timeLeft, setTimeLeft] = useState(0);
 
-  const interval = setInterval(updateTimer, 1000);
+  useEffect(() => {
+    if (!expiresAt) return;
 
-  return () => clearInterval(interval);
-}, [expiresAt]);
+    const updateTimer = () => {
+      const now = Date.now();
+
+      const expiry = new Date(expiresAt).getTime();
+
+      const remaining = Math.max(0, Math.floor((expiry - now) / 1000));
+
+      setTimeLeft(remaining);
+    };
+
+    updateTimer();
+
+    const interval = setInterval(updateTimer, 1000);
+
+    return () => clearInterval(interval);
+  }, [expiresAt]);
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-      <div className="p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">
-          {drop.name}
-        </h2>
-        <div className="text-2xl font-bold text-gray-900 mb-4">
-          ${drop.price}
-        </div>
-
-        <StockBar
-          availableStock={drop.availableStock}
-          initialStock={drop.initialStock}
-        />
-
-        {drop.recentPurchases && drop.recentPurchases.length > 0 && (
-          <ActivityFeed purchases={drop.recentPurchases} />
-        )}
-
-        {isReserve && timeLeft > 0 && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
-            <div className="flex justify-between items-center">
-              <span className="font-medium text-blue-700">Reserved By You</span>
-
-              <span className="font-bold text-red-600">
-                ⏰ {formatTime(timeLeft)}
-              </span>
-            </div>
-
-            <p className="text-xs text-gray-500 mt-1">
-              Complete your purchase before reservation expires.
-            </p>
+      <div className="p-6 flex h-full flex-col justify-between">
+        <div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            {drop.name}
+          </h2>
+          <div className="text-2xl font-bold text-gray-900 mb-4">
+            ${drop.price}
           </div>
-        )}
+
+          <StockBar
+            availableStock={drop.availableStock}
+            initialStock={drop.initialStock}
+          />
+
+          {drop.recentPurchases && drop.recentPurchases.length > 0 && (
+            <ActivityFeed purchases={drop.recentPurchases} />
+          )}
+
+          {isReserve && timeLeft > 0 && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+              <div className="flex justify-between items-center">
+                <span className="font-medium text-blue-700">
+                  Reserved By You
+                </span>
+
+                <span className="font-bold text-red-600">
+                  ⏰ {formatTime(timeLeft)}
+                </span>
+              </div>
+
+              <p className="text-xs text-gray-500 mt-1">
+                Complete your purchase before reservation expires.
+              </p>
+            </div>
+          )}
+        </div>
 
         {isReserve && timeLeft > 0 ? (
           <button
@@ -95,7 +101,7 @@ useEffect(() => {
                 : "bg-green-600 text-white hover:bg-green-700 active:bg-blue-800"
             }`}
             disabled={isSoldOut}
-            onClick={handleReserve}
+            onClick={handlePurchase}
           >
             Purchase Now
           </button>

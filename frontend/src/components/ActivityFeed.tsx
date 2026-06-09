@@ -19,7 +19,7 @@ export function ActivityFeed({ purchases }: ActivityFeedProps) {
   };
 
   return (
-    <div className="border-t pt-4 mt-4">
+    <div className="border-t pt-4 mt-4 mb-4">
       <h3 className="text-sm font-medium text-gray-700 mb-2">
         Latest Purchases
       </h3>

@@ -9,9 +9,10 @@ import { config } from '../config/env.js';
  */
 export async function processExpiredReservations() {
   try {
-    // Find expired reservations
+    // Find expired reservations (only ACTIVE ones, skip PURCHASED)
     const expiredReservations = await prisma.reservation.findMany({
       where: {
+        status: 'ACTIVE',
         expiresAt: {
           lt: new Date(),
         },

@@ -1,7 +1,7 @@
 import { apiSlice } from "../../store/apiSlice";
 export const reservationsApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
-    // GET all users
+    // GET all reservations
     getReservations: builder.query({
       query: () => ({
         url: "/reservations",
@@ -10,7 +10,7 @@ export const reservationsApi = apiSlice.injectEndpoints({
       providesTags: ['Reservation'],
     }),
 
-    // GET users by ID
+    // GET reservations by ID
     getReservationById: builder.query({
       query: (id) => ({
         url: `/reservations/${id}`,
@@ -19,7 +19,7 @@ export const reservationsApi = apiSlice.injectEndpoints({
       providesTags: (result, error, id) => [{ type: 'Reservation', id }],
     }),
 
-    // POST create new users
+    // POST create new reservations
     createReservation: builder.mutation({
       query: (data) => ({
         url: "/reservations",
