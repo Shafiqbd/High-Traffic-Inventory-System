@@ -4,15 +4,17 @@ let socket: Socket | null = null;
 
 export function initializeSocket(): Socket {
   if (socket) {
+    console.log('Returning existing socket instance');
     return socket;
   }
 
+  console.log('Initializing new socket connection to /');
   socket = io('/', {
     transports: ['websocket', 'polling'],
   });
 
   socket.on('connect', () => {
-    console.log('Connected to Socket.io server');
+    console.log('Connected to Socket.io server with ID:', socket.id);
   });
 
   socket.on('disconnect', () => {

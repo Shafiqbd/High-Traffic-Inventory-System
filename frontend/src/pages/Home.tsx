@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   EmptyState,
   ErrorState,
@@ -12,12 +12,14 @@ import { useSelector } from "react-redux";
 import { useCreateReservationMutation } from "../services/reservations/reservationsApi";
 import { toast } from "react-toastify";
 import { useCreatePurchaseMutation } from "../services/purchase/purchaseApi";
+import { initializeSocket, joinDrop } from "../services/socket";
 
 function Home() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
   const [reservation, setReservation] = useState<
     Record<string, any>
   >({});
+  const [localDrops, setLocalDrops] = useState<any[]>([]);
 
   const auth = useSelector((state: any) => state.auth);
   const { user } = auth;
@@ -26,7 +28,81 @@ function Home() {
 
   const { data: dropsResponse, isLoading, isError, error } = useGetDropsQuery();
 
-  const drops = dropsResponse?.data || [];
+  // Sync local drops with API data
+  useEffect(() => {
+    if (dropsResponse?.data) {
+      setLocalDrops(dropsResponse.data);
+    }
+  }, [dropsResponse]);
+
+  // Track if socket is initialized
+  const socketInitialized = useRef(false);
+  const socketInitializedRef = useRef<ReturnType<typeof initializeSocket> | null>(null);
+
+  // Initialize Socket and join drop rooms
+  useEffect(() => {
+    if (socketInitialized.current || !localDrops || localDrops.length === 0) {
+      return;
+    }
+
+    const socket = initializeSocket();
+    socketInitializedRef.current = socket;
+    socketInitialized.current = true;
+
+    // Join all drop rooms
+    localDrops.forEach((drop) => {
+      joinDrop(drop.id);
+      console.log("Joined drop room:", drop.id);
+    });
+
+    // Listen for purchase completed events
+    socket.on("purchase:completed", (data: any) => {
+      console.log("Purchase completed event:", data);
+      setLocalDrops((prevDrops) =>
+        prevDrops.map((drop) =>
+          drop.id === data.dropId
+            ? { ...drop, recentPurchases: data.recentPurchases }
+            : drop
+        )
+      );
+    });
+
+    // Listen for stock updated events
+    socket.on("stock:updated", (data: any) => {
+      console.log("Stock updated event:", data);
+      setLocalDrops((prevDrops) =>
+        prevDrops.map((drop) =>
+          drop.id === data.dropId
+            ? { ...drop, availableStock: data.availableStock }
+            : drop
+        )
+      );
+    });
+
+    // Listen for reservation expired events
+    socket.on("reservation:expired", (data: any) => {
+      console.log("Reservation expired event:", data);
+      setLocalDrops((prevDrops) =>
+        prevDrops.map((drop) =>
+          drop.id === data.dropId
+            ? { ...drop, availableStock: data.availableStock }
+            : drop
+        )
+      );
+    });
+
+    return () => {
+      // Cleanup on unmount
+      if (socketInitializedRef.current) {
+        socketInitializedRef.current.off("purchase:completed");
+        socketInitializedRef.current.off("stock:updated");
+        socketInitializedRef.current.off("reservation:expired");
+      }
+      socketInitialized.current = false;
+    };
+  }, [localDrops.length]); // Only re-run when number of drops changes
+
+  const drops = localDrops;
 
   // Loading state
   if (isLoading) {

@@ -1,6 +1,7 @@
 import { prisma } from '../config/database.js';
 import type { CreateReservationDto, CancelReservationDto } from '../types/reservation.types.js';
 import { ReservationStatus } from '@prisma/client';
+import { emitStockUpdated } from './socket.js';
 
 class ReservationService {
   // Create reservation with transaction to prevent overselling
@@ -78,6 +79,9 @@ class ReservationService {
         updatedStock: updatedDrop.availableStock,
       };
     });
+
+    // Emit stock update event for real-time notification
+    emitStockUpdated(dropId, result.updatedStock);
 
     return {
       id: result.reservation.id,
@@ -171,6 +175,7 @@ class ReservationService {
   // Cancel reservation and restore stock
   async cancel(id: string, data: CancelReservationDto) {
     const { userId } = data;
+    let dropId: string = '';
 
     const result = await prisma.$transaction(async (tx) => {
       // Find the reservation
@@ -181,6 +186,8 @@ class ReservationService {
       if (!reservation) {
         throw new Error('Reservation not found');
       }
+
+      dropId = reservation.dropId;
 
       // Verify ownership
       if (reservation.userId !== userId) {
@@ -222,6 +229,9 @@ class ReservationService {
 
       return updatedDrop.availableStock;
     });
+
+    // Emit stock update event for real-time notification
+    emitStockUpdated(dropId, result);
 
     return {
       success: true,

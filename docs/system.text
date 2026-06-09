@@ -43,3 +43,20 @@
     │   Stock stays at 99       │   │   Drop.availableStock=100  │
     └───────────────────────────┘   └───────────────────────────┘
 
+User A clicks "Reserve Now"
+        ↓
+Backend creates reservation → Stock: 20 → 19
+        ↓
+Emits "stock:updated" event
+        ↓
+All users see stock bar update instantly ✅
+
+User A clicks "Purchase Now"
+        ↓
+Backend completes purchase
+        ↓
+Emits "purchase:completed" event
+        ↓
+All users see recent purchase in Activity Feed ✅
+
+

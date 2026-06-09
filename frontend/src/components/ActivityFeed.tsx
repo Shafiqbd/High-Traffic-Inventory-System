@@ -15,7 +15,7 @@ export function ActivityFeed({ purchases }: ActivityFeedProps) {
   };
 
   const formatUserId = (userId: string) => {
-    return userId.slice(-6);
+    return userId?.slice(-6);
   };
 
   return (

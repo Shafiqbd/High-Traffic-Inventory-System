@@ -30,7 +30,7 @@ class DropService {
       result.push({
         ...this.formatDrop(drop),
         recentPurchases: recentPurchases.map((p) => ({
-          id: p.user.id,
+          id: p.id,
           userName: p.user.name,
           purchasedAt: p.createdAt.toISOString(),
         })),
@@ -67,9 +67,8 @@ class DropService {
     return {
       ...this.formatDrop(drop),
       recentPurchases: recentPurchases.map((p) => ({
-        id: p.id,
-        userName: p.user.name,
-        purchasedAt: p.createdAt.toISOString(),
+        ...p,
+        createdAt: p.createdAt.toISOString(),
       })),
     };
   }
