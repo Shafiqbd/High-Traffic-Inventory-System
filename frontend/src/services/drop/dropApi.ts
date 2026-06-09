@@ -18,7 +18,7 @@ export const dropApi = apiSlice.injectEndpoints({
         url: `/drops/${id}`,
         method: "GET",
       }),
-      providesTags: (result, error, id) => [{ type: 'Drop', id }],
+      providesTags: (_result, _error, id) => [{ type: 'Drop', id }],
     }),
 
     // POST create new drop

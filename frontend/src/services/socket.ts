@@ -14,7 +14,7 @@ export function initializeSocket(): Socket {
   });
 
   socket.on('connect', () => {
-    console.log('Connected to Socket.io server with ID:', socket.id);
+    console.log('Connected to Socket.io server with ID:', socket?.id);
   });
 
   socket.on('disconnect', () => {

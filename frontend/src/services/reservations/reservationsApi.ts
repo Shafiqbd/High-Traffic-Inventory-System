@@ -16,7 +16,7 @@ export const reservationsApi = apiSlice.injectEndpoints({
         url: `/reservations/${id}`,
         method: "GET",
       }),
-      providesTags: (result, error, id) => [{ type: 'Reservation', id }],
+      providesTags: (_result, _error, id) => [{ type: 'Reservation', id }],
     }),
 
     // POST create new reservations

@@ -35,7 +35,7 @@ export interface CreateDropDto {
   name: string;
   price: string | number;
   initialStock: number;
-  startsAt?: string | Date;
+  startsAt?: string;
   status?: string;
 }
 
@@ -43,7 +43,7 @@ export interface UpdateDropDto {
   name?: string;
   price?: string | number;
   initialStock?: number;
-  startsAt?: string | Date;
+  startsAt?: string;
   status?: string;
 }
 

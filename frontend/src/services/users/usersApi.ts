@@ -16,7 +16,7 @@ export const usersApi = apiSlice.injectEndpoints({
         url: `/users/${id}`,
         method: "GET",
       }),
-      providesTags: (result, error, id) => [{ type: 'User', id }],
+      providesTags: (_result, _error, id) => [{ type: 'User', id }],
     }),
 
     // POST create new users
