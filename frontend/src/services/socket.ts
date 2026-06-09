@@ -5,7 +5,9 @@ let socket: Socket | null = null;
 // Get socket server URL from API URL (remove /api suffix)
 const getSocketServerUrl = (): string => {
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
-  return apiUrl.replace('/api', '');
+  const socketUrl = apiUrl.replace('/api', '');
+  console.log('Socket server URL:', socketUrl, 'from API URL:', apiUrl);
+  return socketUrl;
 };
 
 export function initializeSocket(): Socket {
@@ -16,21 +18,24 @@ export function initializeSocket(): Socket {
 
   const serverUrl = getSocketServerUrl();
   console.log('Initializing new socket connection to', serverUrl);
+
   socket = io(serverUrl, {
     transports: ['websocket', 'polling'],
-    secure: true, // Use HTTPS in production
+    reconnection: true,
+    reconnectionAttempts: 5,
+    reconnectionDelay: 1000,
   });
 
   socket.on('connect', () => {
-    console.log('Connected to Socket.io server with ID:', socket?.id);
+    console.log('✅ Connected to Socket.io server with ID:', socket?.id);
   });
 
-  socket.on('disconnect', () => {
-    console.log('Disconnected from Socket.io server');
+  socket.on('disconnect', (reason) => {
+    console.log('❌ Disconnected from Socket.io server:', reason);
   });
 
   socket.on('connect_error', (error) => {
-    console.error('Socket.io connection error:', error);
+    console.error('⚠️ Socket.io connection error:', error);
   });
 
   return socket;
