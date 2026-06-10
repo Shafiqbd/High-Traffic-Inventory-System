@@ -39,13 +39,17 @@ class ReservationService {
       });
 
       if (existingReservation) {
-        // If existing reservation is expired, delete it first
-        if (existingReservation.status === 'EXPIRED' || existingReservation.expiresAt < new Date()) {
+        // Handle based on existing reservation status
+        if (existingReservation.status === 'ACTIVE') {
+          throw new Error('You already have an active reservation for this drop');
+        } else if (existingReservation.status === 'PURCHASED') {
+          throw new Error('You have already purchased this item');
+        } else if (existingReservation.status === 'EXPIRED' || existingReservation.expiresAt < new Date()) {
+          // Delete expired or outdated reservation
           await tx.reservation.delete({
             where: { id: existingReservation.id },
           });
-        } else if (existingReservation.status === 'ACTIVE') {
-          throw new Error('You already have an active reservation for this drop');
+          console.log(`Deleted expired reservation ${existingReservation.id}`);
         }
       }
 

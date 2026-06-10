@@ -18,6 +18,7 @@ export interface UpdateDropDto {
   name?: string;
   price?: string | number;
   initialStock?: number;
+  endsAt?: string | Date;
   startsAt?: string | Date;
   status?: string;
 }

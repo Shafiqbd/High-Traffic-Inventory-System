@@ -7,8 +7,13 @@ import {
 } from '../services/socket.js';
 
 export async function processDropStatusTransitions() {
+  
   const now = new Date();
   console.log('🔄 Running drop status transition job at', now.toISOString());
+
+  console.log("NOW:", now.toISOString());
+
+
 
   try {
     /**
@@ -20,9 +25,6 @@ export async function processDropStatusTransitions() {
           status: DropStatus.UPCOMING,
           startsAt: {
             lte: now,
-          },
-          endsAt: {
-            gt: now,
           },
         },
       });
@@ -62,7 +64,7 @@ export async function processDropStatusTransitions() {
         startsAt:
           updatedDrop.startsAt.toISOString(),
         endsAt:
-          updatedDrop.endsAt.toISOString(),
+          (updatedDrop as any).endsAt?.toISOString() || new Date().toISOString(),
         createdAt:
           updatedDrop.createdAt.toISOString(),
         recentPurchases: recentPurchases.map(p => ({
@@ -75,7 +77,7 @@ export async function processDropStatusTransitions() {
       console.log(
         `🚀 Drop Activated: ${drop.name}`
       );
-    }
+    }   
 
     /**
      * ACTIVE -> ENDED
