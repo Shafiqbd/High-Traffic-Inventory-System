@@ -93,10 +93,11 @@ class DropService {
 
   // Create new drop
   async create(data: CreateDropDto) {
-    const { name, price, initialStock, startsAt, status } = data;
+    const { name, price, initialStock, startsAt, status, endsAt } = data;
 
     const priceNum = typeof price === 'string' ? parseFloat(price) : price;
     const startDate = startsAt ? new Date(startsAt) : new Date();
+    const endsDate = startsAt ? new Date(endsAt) : new Date();
 
 
     const drop = await prisma.drop.create({
@@ -106,6 +107,7 @@ class DropService {
         initialStock,
         availableStock: initialStock,
         startsAt: startDate,
+        endsAt: endsDate,
         status: status ? (status as DropStatus) : DropStatus.UPCOMING,
       },
     });

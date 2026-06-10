@@ -4,6 +4,7 @@ import { Input } from "./ui/Input";
 import { Select } from "./ui/Select";
 import { CreateDropDto } from "../types/drop.types";
 import { useCreateDropMutation } from "../services/drop/dropApi";
+import { toast } from "react-toastify";
 
 const statusOptions = [
   { value: "ACTIVE", label: "Active" },
@@ -24,7 +25,8 @@ export function CreateDropModal({ isOpen, onClose }: CreateDropModalProps) {
     price: "",
     initialStock: 0,
     startsAt: "",
-    status: "ACTIVE",
+    endsAt: "",
+    status: "UPCOMING",
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -47,6 +49,10 @@ export function CreateDropModal({ isOpen, onClose }: CreateDropModalProps) {
     if (!formData.startsAt) {
       newErrors.startsAt = "Start date is required";
     }
+    
+    if (!formData.endsAt) {
+      newErrors.endsAt = "End date is required";
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -56,13 +62,16 @@ export function CreateDropModal({ isOpen, onClose }: CreateDropModalProps) {
     if (!validateForm()) return;
 
     try {
-      await createDrop({
+     const res:any =  await createDrop({
         name: formData.name,
         price: formData.price,
         initialStock: formData.initialStock,
         startsAt: formData.startsAt,
+        endsAt: formData.endsAt,
         status: formData.status,
       }).unwrap();
+
+      toast.success(res.message);
 
       // Reset form and close modal
       setFormData({
@@ -70,7 +79,8 @@ export function CreateDropModal({ isOpen, onClose }: CreateDropModalProps) {
         price: "",
         initialStock: 0,
         startsAt: "",
-        status: "ACTIVE",
+        endsAt: "",
+        status: "UPCOMING",
       });
       setErrors({});
       onClose();
@@ -96,6 +106,7 @@ export function CreateDropModal({ isOpen, onClose }: CreateDropModalProps) {
       name: "",
       price: "",
       initialStock: 0,
+      endsAt: "",
       startsAt: "",
       status: "UPCOMING",
     });
@@ -164,6 +175,15 @@ export function CreateDropModal({ isOpen, onClose }: CreateDropModalProps) {
           value={formData.startsAt}
           onChange={(e) => handleChange("startsAt", e.target.value)}
           error={errors.startsAt}
+          required
+        />
+
+          <Input
+          label="End Date & Time"
+          type="datetime-local"
+          value={formData.endsAt}
+          onChange={(e) => handleChange("endsAt", e.target.value)}
+          error={errors.endsAt}
           required
         />
 

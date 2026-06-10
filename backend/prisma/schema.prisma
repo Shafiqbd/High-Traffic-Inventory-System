@@ -42,6 +42,7 @@ model Drop {
   availableStock Int
   status         DropStatus     @default(UPCOMING)
   startsAt       DateTime
+  endsAt         DateTime      @default(now())
   createdAt      DateTime      @default(now())
 
   // Relations

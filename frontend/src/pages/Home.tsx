@@ -11,12 +11,14 @@ import { useDispatch, useSelector } from "react-redux";
 import { useCreateReservationMutation } from "../services/reservations/reservationsApi";
 import { toast } from "react-toastify";
 import { useCreatePurchaseMutation } from "../services/purchase/purchaseApi";
-import { initializeSocket } from "../services/socket";
+import { initializeSocket, joinDrop } from "../services/socket";
 import { handleLogout } from "../store/slices/authSlice";
+import { CreateDropModal } from "../components/CreateDropModal";
 
 function Home() {
   const [reservation, setReservation] = useState<Record<string, any>>({});
   const [localDrops, setLocalDrops] = useState<any[]>([]);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const dispatch = useDispatch();
 
   const auth = useSelector((state: any) => state.auth);
@@ -39,97 +41,107 @@ function Home() {
     typeof initializeSocket
   > | null>(null);
 
-  // Initialize Socket immediately (don't wait for drops)
+  // Initialize Socket immediately on mount (not dependent on drops)
   useEffect(() => {
     if (socketInitialized.current) {
+      console.log("Socket already initialized, skipping");
       return;
     }
 
     const socket = initializeSocket();
     socketInitializedRef.current = socket;
     socketInitialized.current = true;
+    console.log("✅ Socket initialized successfully");
 
-    console.log("✅ Socket initialized, setting up event listeners...");
-
-    // Listen for drop activation events
-    socket.on("drop:activated", (data: any) => {
-      console.log("🎉 Drop activated event received:", data);
-      setLocalDrops((prevDrops) => {
-        // Check if drop already exists
-        const exists = prevDrops.some((d) => d.id === data.id);
-        if (exists) {
-          // Update existing drop
-          return prevDrops.map((drop) =>
-            drop.id === data.id
-              ? { ...drop, status: data.status, availableStock: data.availableStock }
-              : drop
-          );
-        } else {
-          // Add new drop
-          return [...prevDrops, { ...data, recentPurchases: [] }];
-        }
-      });
-    });
-
-    // Listen for drop ended events (becomes UPCOMING)
-    socket.on("drop:ended", (data: any) => {
-      console.log("🏁 Drop ended event received:", data);
-      setLocalDrops((prevDrops) =>
-        prevDrops.map((drop) =>
-          drop.id === data.dropId ? { ...drop, status: "UPCOMING" } : drop
-        )
-      );
+    // Debug: Listen to all events
+    socket.onAny((eventName, ...args) => {
+      console.log("📡 Socket event received:", eventName, args);
     });
 
     // Listen for purchase completed events
     socket.on("purchase:completed", (data: any) => {
-      console.log("💰 Purchase completed event received:", data);
+      console.log("Purchase completed event:", data);
       setLocalDrops((prevDrops) =>
         prevDrops.map((drop) =>
           drop.id === data.dropId
             ? { ...drop, recentPurchases: data.recentPurchases }
-            : drop
-        )
+            : drop,
+        ),
       );
     });
 
     // Listen for stock updated events
     socket.on("stock:updated", (data: any) => {
-      console.log("📦 Stock updated event received:", data);
+      console.log("Stock updated event:", data);
       setLocalDrops((prevDrops) =>
         prevDrops.map((drop) =>
           drop.id === data.dropId
             ? { ...drop, availableStock: data.availableStock }
-            : drop
-        )
+            : drop,
+        ),
       );
     });
 
     // Listen for reservation expired events
     socket.on("reservation:expired", (data: any) => {
-      console.log("⏰ Reservation expired event received:", data);
+      console.log("Reservation expired event:", data);
       setLocalDrops((prevDrops) =>
         prevDrops.map((drop) =>
           drop.id === data.dropId
             ? { ...drop, availableStock: data.availableStock }
-            : drop
-        )
+            : drop,
+        ),
+      );
+    });
+    
+    
+    //active drops
+    console.log("out drop", localDrops);
+    socket.on("drop:activated", (drop: any) => {
+      console.log("in drop", localDrops);
+      console.log("🎉 Drop activated event received:", drop);
+
+      setLocalDrops((prev) => {
+        const exists = prev.some((d) => d.id === drop.id);
+
+        if (exists) {
+          return prev.map((d) => (d.id === drop.id ? drop : d));
+        }
+
+        return [...prev, drop];
+      });
+    });
+
+    // Listen for drop ended events
+    socket.on("drop:ended", (data: any) => {
+      console.log("Drop ended event:", data);
+      setLocalDrops((prevDrops) =>
+        prevDrops.filter((drop) => drop.id !== data.dropId),
       );
     });
 
     return () => {
       // Cleanup on unmount
       if (socketInitializedRef.current) {
-        socketInitializedRef.current.off("drop:activated");
-        socketInitializedRef.current.off("drop:ended");
         socketInitializedRef.current.off("purchase:completed");
         socketInitializedRef.current.off("stock:updated");
         socketInitializedRef.current.off("reservation:expired");
+        socketInitializedRef.current.off("drop:activated");
+        socketInitializedRef.current.off("drop:ended");
       }
       socketInitialized.current = false;
     };
-  }, []); // Run once on mount
+  }, []); // Empty dependency array - run once on mount
 
+  // Join drop rooms when drops are available
+  useEffect(() => {
+    if (!socketInitialized.current || !localDrops.length) return;
+
+    localDrops.forEach((drop) => {
+      joinDrop(drop.id);
+      console.log("Joined drop room:", drop.id);
+    });
+  }, [localDrops]);
 
   const drops = localDrops;
 
@@ -195,14 +207,12 @@ function Home() {
           : drop,
       ),
     );
-      toast.info("Your reservation has expired");
-
+    toast.info("Your reservation has expired");
   };
 
-  const onClicklogout =  ()=> {
+  const onClicklogout = () => {
     dispatch(handleLogout());
-
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
@@ -218,16 +228,24 @@ function Home() {
             </p>
           </div>
           <Button onClick={onClicklogout} variant="secondary">
-           Logout
-          </Button> 
-          
-           {/* <Button onClick={() => setIsCreateModalOpen(true)} variant="primary">
+            Logout
+          </Button>
+
+          {/* <Button onClick={() => setIsCreateModalOpen(true)} variant="primary">
             + Create Drop
           </Button> */}
         </div>
 
         {drops.length === 0 ? (
-          <EmptyState />
+          <div className="text-center text-gray-600 py-12">
+            <EmptyState />
+            <Button
+              variant="primary"
+              onClick={() => setIsCreateModalOpen(true)}
+            >
+              + Create Drop
+            </Button>
+          </div>
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {drops.map((drop) => (
@@ -246,10 +264,10 @@ function Home() {
       </div>
 
       {/* Create Drop Modal */}
-      {/* <CreateDropModal
+      <CreateDropModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
-      /> */}
+      />
     </div>
   );
 }

@@ -72,7 +72,9 @@ export function emitReservationExpired(dropId: string, availableStock: number) {
 }
 
 export function emitDropActivated(drop: any) {
+  console.log('🚀 Emitting drop:activated event', drop);
   getSocketIO().emit('drop:activated', drop);
+  console.log('✅ drop:activated event emitted to all clients');
 }
 
 export function emitDropEnded(dropId: string) {

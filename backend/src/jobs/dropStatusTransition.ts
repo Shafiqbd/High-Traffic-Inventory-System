@@ -1,29 +1,55 @@
-import { prisma } from '../config/database.js';
-import { emitDropActivated, emitDropEnded } from '../services/socket.js';
 import { DropStatus } from '@prisma/client';
+import { prisma } from '../config/database.js';
 
-/**
- * Background job that automatically transitions drop statuses based on time and stock
- * - UPCOMING → ACTIVE: When startsAt time is reached
- * - ACTIVE → UPCOMING: When stock reaches 0 or 3 minutes after start
- * Runs every 30 seconds
- */
+import {
+  emitDropActivated,
+  emitDropEnded,
+} from '../services/socket.js';
+
 export async function processDropStatusTransitions() {
   const now = new Date();
+  console.log('🔄 Running drop status transition job at', now.toISOString());
 
   try {
-    // 1. Activate drops 
-    const upcomingDrops = await prisma.drop.findMany({
-      where: {
-        status: DropStatus.UPCOMING,
-        startsAt: { lte: now },
-      },
-    });
+    /**
+     * UPCOMING -> ACTIVE
+     */
+    const dropsToActivate =
+      await prisma.drop.findMany({
+        where: {
+          status: DropStatus.UPCOMING,
+          startsAt: {
+            lte: now,
+          },
+          endsAt: {
+            gt: now,
+          },
+        },
+      });
 
-    for (const drop of upcomingDrops) {
-      const updatedDrop = await prisma.drop.update({
-        where: { id: drop.id },
-        data: { status: DropStatus.ACTIVE },
+    console.log(`Found ${dropsToActivate.length} drops to activate`);
+
+    for (const drop of dropsToActivate) {
+      const updatedDrop =
+        await prisma.drop.update({
+          where: {
+            id: drop.id,
+          },
+          data: {
+            status: DropStatus.ACTIVE,
+          },
+        });
+
+      // Fetch recent purchases for this drop
+      const recentPurchases = await prisma.purchase.findMany({
+        where: { dropId: updatedDrop.id },
+        orderBy: { createdAt: 'desc' },
+        take: 3,
+        include: {
+          user: {
+            select: { name: true },
+          },
+        },
       });
 
       emitDropActivated({
@@ -33,44 +59,80 @@ export async function processDropStatusTransitions() {
         initialStock: updatedDrop.initialStock,
         availableStock: updatedDrop.availableStock,
         status: updatedDrop.status,
-        startsAt: updatedDrop.startsAt.toISOString(),
-        createdAt: updatedDrop.createdAt.toISOString(),
+        startsAt:
+          updatedDrop.startsAt.toISOString(),
+        endsAt:
+          updatedDrop.endsAt.toISOString(),
+        createdAt:
+          updatedDrop.createdAt.toISOString(),
+        recentPurchases: recentPurchases.map(p => ({
+          id: p.id,
+          userName: p.user.name,
+          purchasedAt: p.createdAt.toISOString(),
+        })),
       });
 
-      console.log(`✅ Drop "${drop.name}" (${drop.id}) activated`);
+      console.log(
+        `🚀 Drop Activated: ${drop.name}`
+      );
     }
 
-    // 2. End drops
-    const activeDrops = await prisma.drop.findMany({
-      where: {
-        status: DropStatus.ACTIVE,
-        OR: [
-          { availableStock: 0 },
-          { startsAt: { lt: new Date(now.getTime() - 24 * 60 * 60 * 1000) } },
-        ],
-      },
-    });
-
-    for (const drop of activeDrops) {
-      await prisma.drop.update({
-        where: { id: drop.id },
-        data: { status: DropStatus.UPCOMING },
+    /**
+     * ACTIVE -> ENDED
+     */
+    const dropsToEnd =
+      await prisma.drop.findMany({
+        where: {
+          status: DropStatus.ACTIVE,
+          OR: [
+            {
+              availableStock: 0,
+            },
+            {
+              endsAt: {
+                lte: now,
+              },
+            },
+          ],
+        },
       });
 
-      emitDropEnded(drop.id);
-      console.log(`🏁 Drop "${drop.name}" (${drop.id}) UPCOMING`);
+    for (const drop of dropsToEnd) {
+      const updatedDrop =
+        await prisma.drop.update({
+          where: {
+            id: drop.id,
+          },
+          data: {
+            status: DropStatus.ENDED,
+          },
+        });
+
+      emitDropEnded(updatedDrop.id);
+
+      console.log(
+        `🏁 Drop Ended: ${drop.name}`
+      );
     }
   } catch (error) {
-    console.error('Error processing drop status transitions:', error);
+    console.error(
+      'Error processing drop status transitions:',
+      error
+    );
   }
 }
 
-/**
- * Start background job
- */
 export function startDropStatusTransitionJob() {
-  const intervalMs = 3000; // 30 seconds
-  console.log(`🔄 Starting drop status transition job (interval: ${intervalMs}ms)`);
-  processDropStatusTransitions(); // Run immediately
-  setInterval(processDropStatusTransitions, intervalMs);
+  const intervalMs = 30 * 1000;
+
+  console.log(
+    `🔄 Drop scheduler started (${intervalMs}ms)`
+  );
+
+  processDropStatusTransitions();
+
+  setInterval(
+    processDropStatusTransitions,
+    intervalMs
+  );
 }

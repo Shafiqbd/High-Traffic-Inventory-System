@@ -10,6 +10,7 @@ export interface CreateDropDto {
   price: string | number;
   initialStock: number;
   startsAt: string | Date;
+  endsAt: string | Date;
   status: DropStatus;
 }
 

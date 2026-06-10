@@ -8,6 +8,7 @@ export interface Drop {
   availableStock: number;
   status: 'UPCOMING' | 'ACTIVE' | 'ENDED';
   startsAt: string;
+  endsAt: string;
   createdAt: string;
 }
 
@@ -27,6 +28,7 @@ export interface DropWithPurchases {
   availableStock: number;
   status: 'UPCOMING' | 'ACTIVE' | 'ENDED';
   startsAt: string;
+  endsAt: string;
   createdAt: string;
   recentPurchases?: Purchase[];
 }
@@ -36,6 +38,7 @@ export interface CreateDropDto {
   price: string | number;
   initialStock: number;
   startsAt?: string;
+  endsAt?: string;
   status?: string;
 }
 
